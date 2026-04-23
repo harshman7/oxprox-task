@@ -4,7 +4,8 @@ import { motion, useReducedMotion, type Variants } from "framer-motion";
 import dynamic from "next/dynamic";
 
 import KeyInsights from "@/app/components/KeyInsights";
-import { RESOLUTIONS } from "@/app/data/votes";
+import ResolutionsSection from "@/app/components/ResolutionsSection";
+import { HOVER_SPRING } from "@/app/components/motion/hover";
 
 // Recharts' ResponsiveContainer needs a measured DOM parent; rendering it
 // during SSR logs a benign width/height warning. Defer to the client so the
@@ -43,19 +44,6 @@ const heroLede: Variants = {
 const revealItem: Variants = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
-};
-
-const listContainer: Variants = {
-  hidden: { opacity: 1 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.06, delayChildren: 0.1 },
-  },
-};
-
-const listItem: Variants = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE } },
 };
 
 const readingGuide: {
@@ -150,32 +138,43 @@ export default function HomeContent() {
           </h2>
           <dl className="mt-8 grid gap-6 sm:grid-cols-3 sm:gap-8">
             {readingGuide.map((g) => (
-              <div key={g.label} className="border-t border-white/15 pt-4">
-                <dt className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-300">
+              <motion.div
+                key={g.label}
+                whileHover={reduced ? undefined : { y: -4 }}
+                transition={HOVER_SPRING}
+                className="group relative rounded-lg border-t border-white/15 pt-4 transition-colors duration-200 hover:border-blue-300/60"
+              >
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 -top-px h-px origin-left scale-x-0 bg-blue-300 transition-transform duration-300 group-hover:scale-x-100"
+                />
+                <dt className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-300 transition-colors group-hover:text-blue-100">
                   {g.label}
                 </dt>
                 <p className="mt-2 font-display text-lg leading-snug sm:text-xl">
                   {g.title}
                 </p>
-                <dd className="mt-2 text-sm leading-relaxed text-white/75">
+                <dd className="mt-2 text-sm leading-relaxed text-white/75 transition-colors group-hover:text-white">
                   {g.body}
                 </dd>
-              </div>
+              </motion.div>
             ))}
           </dl>
         </div>
       </motion.section>
 
       <motion.section
-        className="relative mt-8 overflow-hidden rounded-2xl border border-canvas-alt bg-surface p-4 shadow-sm sm:mt-10 sm:p-8"
+        className="group relative mt-8 overflow-hidden rounded-2xl border border-canvas-alt bg-surface p-4 shadow-sm transition-[border-color,box-shadow] duration-300 hover:border-blue-500/40 hover:shadow-2xl sm:mt-10 sm:p-8 dark:hover:shadow-black/40"
         variants={maybe(revealItem)}
         initial={reduced ? false : "hidden"}
         whileInView={reduced ? undefined : "show"}
+        whileHover={reduced ? undefined : { scale: 1.005 }}
+        transition={HOVER_SPRING}
         viewport={{ once: true, margin: "-60px" }}
       >
         <motion.span
           aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-2xl"
+          className="pointer-events-none absolute inset-0 rounded-2xl opacity-60 transition-opacity duration-500 group-hover:opacity-100"
           style={{
             background:
               "linear-gradient(135deg, rgba(82,124,238,0.35), rgba(138,188,255,0.0) 40%, rgba(37,195,178,0.25))",
@@ -186,7 +185,7 @@ export default function HomeContent() {
             padding: "1px",
           }}
           initial={reduced ? false : { opacity: 0 }}
-          whileInView={reduced ? undefined : { opacity: 1 }}
+          whileInView={reduced ? undefined : { opacity: 0.6 }}
           viewport={{ once: true }}
           transition={{ duration: 1.1, delay: 1.2, ease: EASE }}
         />
@@ -195,34 +194,7 @@ export default function HomeContent() {
 
       <KeyInsights />
 
-      <motion.section
-        className="mt-8 rounded-2xl border border-canvas-alt bg-surface/60 p-6 sm:mt-10 sm:p-8"
-        variants={maybe(listContainer)}
-        initial={reduced ? false : "hidden"}
-        whileInView={reduced ? undefined : "show"}
-        viewport={{ once: true, margin: "-40px" }}
-      >
-        <motion.h2
-          variants={maybe(listItem)}
-          className="font-display text-xl text-ink sm:text-2xl"
-        >
-          The five resolutions
-        </motion.h2>
-        <ol className="mt-4 grid gap-3 text-sm text-ink/90 sm:grid-cols-2 sm:text-base">
-          {RESOLUTIONS.map((r) => (
-            <motion.li
-              key={r.id}
-              variants={maybe(listItem)}
-              className="flex items-start gap-3 rounded-lg bg-canvas-alt/40 px-3 py-2"
-            >
-              <span className="font-display text-base text-blue-500">
-                {r.id}
-              </span>
-              <span>{r.title.replace(/^Proposal \d+ — /, "")}</span>
-            </motion.li>
-          ))}
-        </ol>
-      </motion.section>
+      <ResolutionsSection />
     </div>
   );
 }

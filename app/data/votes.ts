@@ -119,6 +119,21 @@ export type PerResolutionTally = {
 };
 
 /**
+ * Short human label for the strongest signal on a resolution.
+ * - "Carried: For" / "Carried: Against" when one side has a strict majority (>= half + 1).
+ * - "Leans For/Against" when it's the largest bucket but not a majority.
+ * - "Split" on an exact For/Against tie.
+ */
+export function getPluralityLabel(t: PerResolutionTally): string {
+  const majority = Math.floor(t.total / 2) + 1;
+  if (t.For >= majority) return "Carried: For";
+  if (t.Against >= majority) return "Carried: Against";
+  if (t.For > t.Against) return "Leans For";
+  if (t.Against > t.For) return "Leans Against";
+  return "Split";
+}
+
+/**
  * Inverts the matrix: one row per resolution with counts across investors.
  */
 export function getPerResolutionTally(): PerResolutionTally[] {

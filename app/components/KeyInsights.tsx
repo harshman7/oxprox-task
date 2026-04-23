@@ -4,6 +4,11 @@ import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { CheckSquare, Scale, TrendingDown, TrendingUp } from "lucide-react";
 
 import CountUp from "@/app/components/motion/CountUp";
+import {
+  CARD_HOVER,
+  CARD_TAP,
+  HOVER_SPRING,
+} from "@/app/components/motion/hover";
 import { getKeyInsights } from "@/app/data/votes";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -113,26 +118,29 @@ export default function KeyInsights() {
             <motion.div
               key={s.label}
               variants={reduced ? undefined : card}
-              whileHover={reduced ? undefined : { y: -4 }}
-              transition={{ type: "spring", stiffness: 260, damping: 22 }}
-              className="group relative overflow-hidden rounded-xl border border-canvas-alt bg-canvas/40 p-5 transition-colors hover:bg-canvas/80"
+              whileHover={reduced ? undefined : CARD_HOVER}
+              whileTap={reduced ? undefined : CARD_TAP}
+              transition={HOVER_SPRING}
+              className="group relative overflow-hidden rounded-xl border border-canvas-alt bg-canvas/40 p-5 shadow-sm transition-[background-color,border-color,box-shadow] duration-200 hover:border-blue-500/30 hover:bg-canvas/80 hover:shadow-xl dark:hover:shadow-black/40"
             >
               <span
                 aria-hidden
-                className="absolute inset-x-0 top-0 h-0.5"
+                className="absolute inset-x-0 top-0 h-0.5 origin-left scale-x-75 transition-transform duration-300 group-hover:scale-x-100"
                 style={{ backgroundColor: s.accent }}
               />
               <div className="flex items-start justify-between gap-3">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral">
                   {s.label}
                 </p>
-                <span
+                <motion.span
                   aria-hidden
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-full"
+                  whileHover={reduced ? undefined : { rotate: 8, scale: 1.12 }}
+                  transition={HOVER_SPRING}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full transition-colors duration-300 group-hover:h-8 group-hover:w-8"
                   style={{ backgroundColor: `${s.accent}22`, color: s.accent }}
                 >
                   <Icon size={14} />
-                </span>
+                </motion.span>
               </div>
               <p className="mt-4 font-display leading-none text-ink">
                 {s.kind === "fraction" ? (
