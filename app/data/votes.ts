@@ -16,11 +16,11 @@ export type Resolution = {
 };
 
 export const RESOLUTIONS: Resolution[] = [
-  { id: "P1", title: "Proposal 1 — Board Diversity", shortTitle: "Board Diversity" },
-  { id: "P2", title: "Proposal 2 — CEO Pay Ratio", shortTitle: "CEO Pay Ratio" },
-  { id: "P3", title: "Proposal 3 — Climate Disclosure", shortTitle: "Climate Disclosure" },
-  { id: "P4", title: "Proposal 4 — Independent Chair", shortTitle: "Independent Chair" },
-  { id: "P5", title: "Proposal 5 — Share Buyback", shortTitle: "Share Buyback" },
+  { id: "P1", title: "Proposal 1 - Board Diversity", shortTitle: "Board Diversity" },
+  { id: "P2", title: "Proposal 2 - CEO Pay Ratio", shortTitle: "CEO Pay Ratio" },
+  { id: "P3", title: "Proposal 3 - Climate Disclosure", shortTitle: "Climate Disclosure" },
+  { id: "P4", title: "Proposal 4 - Independent Chair", shortTitle: "Independent Chair" },
+  { id: "P5", title: "Proposal 5 - Share Buyback", shortTitle: "Share Buyback" },
 ];
 
 export const INVESTORS: Investor[] = [
@@ -164,7 +164,7 @@ export type KeyInsights = {
 };
 
 /**
- * Derives headline signals from the vote matrix. Deterministic — ties are
+ * Derives headline signals from the vote matrix. Deterministic - ties are
  * broken by resolution order in RESOLUTIONS.
  */
 export function getKeyInsights(): KeyInsights {

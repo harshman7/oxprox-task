@@ -15,6 +15,13 @@ import type { TooltipContentProps } from "recharts";
 import { useReducedMotion } from "framer-motion";
 
 import {
+  PATTERN_HINT,
+  PatternSwatch,
+  VOTE_COLOURS,
+  VotePatternDefs,
+  patternId,
+} from "@/app/components/chart/VotePatterns";
+import {
   getInvestorSummary,
   RESOLUTIONS,
   VOTE_TYPES,
@@ -22,12 +29,6 @@ import {
   type Vote,
 } from "@/app/data/votes";
 import { useThemeTokens } from "@/app/hooks/useThemeTokens";
-
-const VOTE_COLOURS: Record<Vote, string> = {
-  For: "#25C3B2",
-  Against: "#9D013D",
-  Abstain: "#E6AC12",
-};
 
 const data = getInvestorSummary();
 
@@ -40,7 +41,7 @@ const chartData: ChartDatum[] = data.map((row) => ({
 
 // In a stacked column, the "visible top" is the last category (in stack order
 // bottom → top) that actually has a non-zero value for that row. We round the
-// top corners of that segment only — so bars whose topmost category is
+// top corners of that segment only - so bars whose topmost category is
 // For or Against still get rounded caps.
 function topVoteFor(row: ChartDatum): Vote | null {
   for (let i = VOTE_TYPES.length - 1; i >= 0; i -= 1) {
@@ -58,18 +59,29 @@ type BarShapeProps = {
   payload?: ChartDatum;
 };
 
-function makeRoundedTopShape(vote: Vote) {
+function makeRoundedTopShape(vote: Vote, strokeColor: string) {
   const Shape = (props: BarShapeProps) => {
     const { payload } = props;
     const isTop = payload ? topVoteFor(payload) === vote : false;
     const radius = isTop ? [6, 6, 0, 0] : [0, 0, 0, 0];
-    return <Rectangle {...props} radius={radius as [number, number, number, number]} />;
+    return (
+      <Rectangle
+        {...props}
+        radius={radius as [number, number, number, number]}
+        stroke={strokeColor}
+        strokeWidth={1}
+      />
+    );
   };
   Shape.displayName = `RoundedTop(${vote})`;
   return Shape;
 }
 
-function VotesTooltip({ active, payload }: TooltipContentProps) {
+type VotesTooltipProps = TooltipContentProps & {
+  overlayColor: string;
+};
+
+function VotesTooltip({ active, payload, overlayColor }: VotesTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
 
   const row = payload[0].payload as ChartDatum;
@@ -94,16 +106,18 @@ function VotesTooltip({ active, payload }: TooltipContentProps) {
             .join(", ");
           return (
             <li key={vote} className="flex items-start gap-2">
-              <span
-                aria-hidden
-                className="mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-sm"
-                style={{ backgroundColor: VOTE_COLOURS[vote] }}
-              />
+              <span className="mt-[3px]">
+                <PatternSwatch
+                  vote={vote}
+                  size={12}
+                  overlayColor={overlayColor}
+                />
+              </span>
               <span className="flex-1">
                 <span className="font-medium">{vote}</span>
                 <span className="text-neutral">
                   {" "}
-                  — {count} of {total} ({pct}%)
+                  - {count} of {total} ({pct}%)
                 </span>
                 <span className="block text-xs text-neutral/80">
                   {resolutions}
@@ -117,14 +131,48 @@ function VotesTooltip({ active, payload }: TooltipContentProps) {
   );
 }
 
+type LegendContentProps = {
+  overlayColor: string;
+  textColor: string;
+};
+
+function CustomLegend({ overlayColor, textColor }: LegendContentProps) {
+  return (
+    <ul
+      className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pb-2"
+      style={{ color: textColor, fontSize: 13 }}
+    >
+      {VOTE_TYPES.map((vote) => (
+        <li key={vote} className="flex items-center gap-2">
+          <PatternSwatch vote={vote} size={14} overlayColor={overlayColor} />
+          <span className="font-medium">{vote}</span>
+          <span className="text-xs uppercase tracking-[0.12em] opacity-60">
+            {PATTERN_HINT[vote]}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default function VotesChart() {
   const reduced = useReducedMotion();
   const tokens = useThemeTokens();
   const animate = !reduced;
+
+  // Hatch/dot overlay colour flips with theme so patterns stay legible on both
+  // dark and light canvases. Lighter alpha keeps the brand hue dominant.
+  const overlayColor = tokens.isDark
+    ? "rgba(255, 255, 255, 0.4)"
+    : "rgba(14, 32, 67, 0.35)";
+  // Stroke between stacked segments - pick the canvas so borders read as a
+  // subtle separator rather than an additional colour.
+  const segmentStroke = tokens.surface;
+
   return (
     <div
       role="img"
-      aria-label="Stacked bar chart of how investors A through E voted across five proposals, grouped by For, Against, and Abstain"
+      aria-label="Stacked bar chart of how investors A through E voted across five proposals, grouped by For, Against, and Abstain. Segments are also distinguished by fill pattern - For uses horizontal lines, Against uses dense diagonals, Abstain uses dots - so the chart remains readable without relying on colour alone."
       className="h-[360px] w-full sm:h-[440px]"
     >
       <ResponsiveContainer
@@ -137,6 +185,7 @@ export default function VotesChart() {
           margin={{ top: 24, right: 16, bottom: 32, left: 0 }}
           barCategoryGap="28%"
         >
+          <VotePatternDefs scope="chart" overlayColor={overlayColor} />
           <CartesianGrid stroke={tokens.canvasAlt} vertical={false} />
           <XAxis
             dataKey="label"
@@ -169,7 +218,9 @@ export default function VotesChart() {
             }}
           />
           <Tooltip
-            content={(props) => <VotesTooltip {...props} />}
+            content={(props) => (
+              <VotesTooltip {...props} overlayColor={overlayColor} />
+            )}
             cursor={{
               fill: tokens.ink,
               fillOpacity: tokens.isDark ? 0.12 : 0.04,
@@ -180,14 +231,13 @@ export default function VotesChart() {
           <Legend
             verticalAlign="top"
             align="center"
-            height={36}
-            iconType="circle"
-            iconSize={10}
-            wrapperStyle={{
-              fontSize: 13,
-              color: tokens.ink,
-              paddingBottom: 8,
-            }}
+            height={40}
+            content={() => (
+              <CustomLegend
+                overlayColor={overlayColor}
+                textColor={tokens.ink}
+              />
+            )}
           />
           {VOTE_TYPES.map((vote, idx) => (
             <Bar
@@ -195,9 +245,9 @@ export default function VotesChart() {
               dataKey={vote}
               name={vote}
               stackId="votes"
-              fill={VOTE_COLOURS[vote]}
+              fill={`url(#${patternId(vote, "chart")})`}
               maxBarSize={72}
-              shape={makeRoundedTopShape(vote)}
+              shape={makeRoundedTopShape(vote, segmentStroke)}
               isAnimationActive={animate}
               animationBegin={200 + idx * 120}
               animationDuration={700}
@@ -209,3 +259,5 @@ export default function VotesChart() {
     </div>
   );
 }
+
+export { VOTE_COLOURS };

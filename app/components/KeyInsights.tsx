@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { CheckSquare, Scale, TrendingDown, TrendingUp } from "lucide-react";
+import type { ReactNode } from "react";
 
 import CountUp from "@/app/components/motion/CountUp";
 import {
@@ -9,7 +10,7 @@ import {
   CARD_TAP,
   HOVER_SPRING,
 } from "@/app/components/motion/hover";
-import { getKeyInsights } from "@/app/data/votes";
+import { INVESTORS, VOTES, getKeyInsights, type Resolution } from "@/app/data/votes";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -25,65 +26,86 @@ const card: Variants = {
 
 const insights = getKeyInsights();
 
-type Stat =
-  | {
-      kind: "fraction";
-      label: string;
-      numerator: number;
-      denominator: number;
-      title: string;
-      description: string;
-      icon: React.ComponentType<{ size?: number; className?: string }>;
-      accent: string;
-    }
-  | {
-      kind: "count";
-      label: string;
-      value: number;
-      title: string;
-      description: string;
-      icon: React.ComponentType<{ size?: number; className?: string }>;
-      accent: string;
-    };
+type NarrativeInsight = {
+  id: string;
+  label: string;
+  title: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  accent: string;
+  metric: ReactNode;
+  body: string;
+  detail: string;
+};
 
-const stats: Stat[] = [
+function investorsFor(resolution: Resolution, vote: "For" | "Against" | "Abstain"): string[] {
+  return INVESTORS.filter((inv) => VOTES[resolution.id][inv] === vote).map((inv) =>
+    inv.replace("Investor ", "")
+  );
+}
+
+const supportFor = investorsFor(insights.mostSupported.resolution, "For");
+const opposeFor = investorsFor(insights.mostSupported.resolution, "Against");
+const opposeAgainst = investorsFor(insights.mostOpposed.resolution, "Against");
+const supportAgainst = investorsFor(insights.mostOpposed.resolution, "For");
+const contestedFor = investorsFor(insights.mostDivided.resolution, "For");
+const contestedAgainst = investorsFor(insights.mostDivided.resolution, "Against");
+
+const narratives: NarrativeInsight[] = [
   {
-    kind: "fraction",
+    id: "support",
     label: "Broadest support",
-    numerator: insights.mostSupported.For,
-    denominator: insights.mostSupported.total,
     title: insights.mostSupported.resolution.shortTitle,
-    description: "investors voted For — the widest agreement on the ballot.",
     icon: TrendingUp,
     accent: "#25C3B2",
+    metric: (
+      <>
+        <CountUp value={insights.mostSupported.For} className="text-5xl text-white sm:text-6xl" />
+        <span className="text-2xl text-white/55 sm:text-3xl"> / {insights.mostSupported.total}</span>
+      </>
+    ),
+    body: `${insights.mostSupported.For} of ${insights.mostSupported.total} investors backed this proposal, making it the strongest consensus point on the ballot.`,
+    detail: `Support came from ${supportFor.join(", ")}. Only ${opposeFor.join(", ")} voted against it.`,
   },
   {
-    kind: "fraction",
+    id: "opposition",
     label: "Broadest opposition",
-    numerator: insights.mostOpposed.Against,
-    denominator: insights.mostOpposed.total,
     title: insights.mostOpposed.resolution.shortTitle,
-    description: "investors voted Against — the clearest rejection.",
     icon: TrendingDown,
     accent: "#9D013D",
+    metric: (
+      <>
+        <CountUp value={insights.mostOpposed.Against} className="text-5xl text-white sm:text-6xl" />
+        <span className="text-2xl text-white/55 sm:text-3xl"> / {insights.mostOpposed.total}</span>
+      </>
+    ),
+    body: `${insights.mostOpposed.Against} of ${insights.mostOpposed.total} investors rejected this proposal, the clearest negative signal in the set.`,
+    detail: `Opposition clustered around ${opposeAgainst.join(", ")}. Support was limited to ${supportAgainst.join(", ")}.`,
   },
   {
-    kind: "count",
+    id: "contested",
     label: "Most contested",
-    value: insights.mostDivided.For,
     title: insights.mostDivided.resolution.shortTitle,
-    description: `${insights.mostDivided.For} For · ${insights.mostDivided.Against} Against — the room is split.`,
     icon: Scale,
     accent: "#E6AC12",
+    metric: (
+      <>
+        <CountUp value={insights.mostDivided.For} className="text-5xl text-white sm:text-6xl" />
+        <span className="text-2xl text-white/55 sm:text-3xl"> - </span>
+        <CountUp value={insights.mostDivided.Against} className="text-5xl text-white sm:text-6xl" />
+      </>
+    ),
+    body: `The room split ${insights.mostDivided.For} For vs ${insights.mostDivided.Against} Against, which marks this as the closest call on the ballot.`,
+    detail: `For: ${contestedFor.join(", ")}. Against: ${contestedAgainst.join(", ")}.`,
   },
   {
-    kind: "count",
-    label: "Total ballots",
-    value: insights.totalVotes,
+    id: "volume",
+    label: "Ballot volume",
     title: "Votes cast",
-    description: `${insights.investorCount} investors × ${insights.resolutionCount} resolutions, including ${insights.abstainCount} abstain.`,
     icon: CheckSquare,
     accent: "#527CEE",
+    metric: <CountUp value={insights.totalVotes} className="text-5xl text-white sm:text-6xl" />,
+    body: `${insights.investorCount} investors across ${insights.resolutionCount} proposals generated ${insights.totalVotes} total voting decisions.`,
+    detail: `${insights.abstainCount} vote was an abstention, so almost every ballot still landed on a directional For or Against view.`,
   },
 ];
 
@@ -92,7 +114,7 @@ export default function KeyInsights() {
 
   return (
     <motion.section
-      className="mt-8 rounded-2xl border border-canvas-alt bg-surface p-6 shadow-sm sm:mt-10 sm:p-8"
+      className="rounded-2xl border border-[#132750] bg-ink p-6 text-white shadow-sm sm:p-8"
       variants={reduced ? undefined : container}
       initial={reduced ? false : "hidden"}
       whileInView={reduced ? undefined : "show"}
@@ -100,71 +122,59 @@ export default function KeyInsights() {
     >
       <motion.p
         variants={reduced ? undefined : card}
-        className="text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-500"
+        className="text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-300"
       >
         What the chart says
       </motion.p>
       <motion.h2
         variants={reduced ? undefined : card}
-        className="mt-2 font-display text-2xl text-ink sm:text-3xl"
+        className="mt-2 font-display text-2xl text-white sm:text-3xl"
       >
         Signals across the ballot.
       </motion.h2>
 
-      <div className="mt-6 grid gap-4 sm:mt-8 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
-        {stats.map((s) => {
+      <div className="mt-6 space-y-4 sm:mt-8 sm:space-y-5">
+        {narratives.map((s) => {
           const Icon = s.icon;
           return (
-            <motion.div
-              key={s.label}
+            <motion.article
+              key={s.id}
               variants={reduced ? undefined : card}
               whileHover={reduced ? undefined : CARD_HOVER}
               whileTap={reduced ? undefined : CARD_TAP}
               transition={HOVER_SPRING}
-              className="group relative overflow-hidden rounded-xl border border-canvas-alt bg-canvas/40 p-5 shadow-sm transition-[background-color,border-color,box-shadow] duration-200 hover:border-blue-500/30 hover:bg-canvas/80 hover:shadow-xl dark:hover:shadow-black/40"
+              className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur-sm transition-[background-color,border-color,box-shadow,transform] duration-200 hover:border-white/30 hover:bg-white/10 hover:shadow-xl sm:p-6"
             >
               <span
                 aria-hidden
-                className="absolute inset-x-0 top-0 h-0.5 origin-left scale-x-75 transition-transform duration-300 group-hover:scale-x-100"
+                className="absolute inset-y-0 left-0 w-1"
                 style={{ backgroundColor: s.accent }}
               />
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral">
-                  {s.label}
-                </p>
-                <motion.span
-                  aria-hidden
-                  whileHover={reduced ? undefined : { rotate: 8, scale: 1.12 }}
-                  transition={HOVER_SPRING}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-full transition-colors duration-300 group-hover:h-8 group-hover:w-8"
-                  style={{ backgroundColor: `${s.accent}22`, color: s.accent }}
-                >
-                  <Icon size={14} />
-                </motion.span>
+              <div className="grid gap-5 pl-3 sm:grid-cols-[200px_minmax(0,1fr)] sm:items-start">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">
+                    {s.label}
+                  </p>
+                  <p className="mt-3 font-display leading-none text-white">{s.metric}</p>
+                </div>
+                <div>
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-display text-2xl text-white sm:text-3xl">{s.title}</p>
+                    <motion.span
+                      aria-hidden
+                      whileHover={reduced ? undefined : { rotate: 8, scale: 1.12 }}
+                      transition={HOVER_SPRING}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-300 group-hover:h-9 group-hover:w-9"
+                      style={{ backgroundColor: `${s.accent}22`, color: s.accent }}
+                    >
+                      <Icon size={16} />
+                    </motion.span>
+                  </div>
+                  <p className="mt-2 text-[15px] leading-relaxed text-white/80">{s.body}</p>
+                  <p className="mt-3 text-sm leading-relaxed text-white/65">{s.detail}</p>
+                </div>
               </div>
-              <p className="mt-4 font-display leading-none text-ink">
-                {s.kind === "fraction" ? (
-                  <>
-                    <CountUp
-                      value={s.numerator}
-                      className="text-5xl sm:text-6xl"
-                    />
-                    <span className="text-2xl text-neutral sm:text-3xl">
-                      {" "}
-                      / {s.denominator}
-                    </span>
-                  </>
-                ) : (
-                  <CountUp value={s.value} className="text-5xl sm:text-6xl" />
-                )}
-              </p>
-              <p className="mt-3 font-display text-lg text-ink sm:text-xl">
-                {s.title}
-              </p>
-              <p className="mt-1 text-sm leading-relaxed text-neutral">
-                {s.description}
-              </p>
-            </motion.div>
+            </motion.article>
           );
         })}
       </div>

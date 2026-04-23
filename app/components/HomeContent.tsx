@@ -54,12 +54,12 @@ const readingGuide: {
   {
     label: "Each bar",
     title: "One investor",
-    body: "Five fictional asset managers, side by side — A through E.",
+    body: "Five fictional asset managers, side by side - A through E.",
   },
   {
     label: "Each segment",
     title: "For, Against, Abstain",
-    body: "Stacks add up to five votes — the full ballot for each fund.",
+    body: "Stacks add up to five votes - the full ballot for each fund.",
   },
   {
     label: "On hover",
@@ -81,9 +81,8 @@ export default function HomeContent() {
     reduced ? undefined : variants;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-6 py-10 sm:py-14">
+    <div className="mx-auto w-full max-w-6xl space-y-20 px-6 py-14 sm:space-y-28 sm:py-20 lg:space-y-32 lg:py-24">
       <motion.section
-        className="mb-10 sm:mb-12"
         variants={maybe(heroContainer)}
         initial={reduced ? false : "hidden"}
         animate={reduced ? undefined : "show"}
@@ -164,7 +163,7 @@ export default function HomeContent() {
       </motion.section>
 
       <motion.section
-        className="group relative mt-8 overflow-hidden rounded-2xl border border-canvas-alt bg-surface p-4 shadow-sm transition-[border-color,box-shadow] duration-300 hover:border-blue-500/40 hover:shadow-2xl sm:mt-10 sm:p-8 dark:hover:shadow-black/40"
+        className="group relative overflow-hidden rounded-2xl border border-canvas-alt bg-surface p-4 shadow-sm transition-[border-color,box-shadow] duration-300 hover:border-blue-500/40 hover:shadow-2xl sm:p-8 dark:hover:shadow-black/40"
         variants={maybe(revealItem)}
         initial={reduced ? false : "hidden"}
         whileInView={reduced ? undefined : "show"}
@@ -190,6 +189,10 @@ export default function HomeContent() {
           transition={{ duration: 1.1, delay: 1.2, ease: EASE }}
         />
         <VotesChart />
+        <p className="relative mt-3 text-center text-xs text-neutral sm:mt-4">
+          Each segment is also encoded by fill pattern so the chart stays
+          legible without relying on colour alone.
+        </p>
       </motion.section>
 
       <KeyInsights />

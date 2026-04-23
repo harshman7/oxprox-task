@@ -2,6 +2,11 @@
 
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 
+import {
+  VOTE_COLOURS,
+  VotePatternDefs,
+  patternId,
+} from "@/app/components/chart/VotePatterns";
 import { HOVER_SPRING } from "@/app/components/motion/hover";
 import {
   getPerResolutionTally,
@@ -10,18 +15,10 @@ import {
   VOTES,
   VOTE_TYPES,
   type PerResolutionTally,
-  type Vote,
 } from "@/app/data/votes";
+import { useThemeTokens } from "@/app/hooks/useThemeTokens";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
-
-// Brand chart palette — mirrored from VotesChart so the mini 100% bar and the
-// investor pills read as the same data in a different view.
-const VOTE_COLOURS: Record<Vote, string> = {
-  For: "#25C3B2",
-  Against: "#9D013D",
-  Abstain: "#E6AC12",
-};
 
 const container: Variants = {
   hidden: { opacity: 1 },
@@ -70,29 +67,73 @@ const tallies = getPerResolutionTally();
 
 type MiniBarProps = {
   tally: PerResolutionTally;
+  dividerColor: string;
 };
 
-function MiniTallyBar({ tally }: MiniBarProps) {
+function MiniTallyBar({ tally, dividerColor }: MiniBarProps) {
+  const height = 8;
+  // Pre-compute each visible segment's width + offset so we can draw thin
+  // dividers between them and keep the rounded end-caps aligned with the
+  // outermost segments only.
+  const segments = VOTE_TYPES.filter((v) => tally[v] > 0).map((vote) => ({
+    vote,
+    pct: (tally[vote] / tally.total) * 100,
+  }));
+  // reduce-based offset computation keeps the running sum out of the render
+  // scope so React 19's immutability lint stays happy.
+  const placed = segments.reduce<
+    Array<{ vote: (typeof segments)[number]["vote"]; pct: number; x: number }>
+  >((acc, s) => {
+    const prev = acc[acc.length - 1];
+    const x = prev ? prev.x + prev.pct : 0;
+    acc.push({ ...s, x });
+    return acc;
+  }, []);
+
   return (
-    <div
-      className="flex h-2 w-full overflow-hidden rounded-full bg-canvas-alt"
+    <svg
+      viewBox="0 0 100 8"
+      preserveAspectRatio="none"
+      className="h-2 w-full overflow-visible rounded-full"
+      style={{ backgroundColor: "transparent" }}
       aria-hidden
     >
-      {VOTE_TYPES.map((vote) => {
-        const n = tally[vote];
-        if (n === 0) return null;
-        return (
-          <span
-            key={vote}
-            className="block h-full"
-            style={{
-              width: `${(n / tally.total) * 100}%`,
-              backgroundColor: VOTE_COLOURS[vote],
-            }}
+      <defs>
+        {/* Rounded clip so pattern fills stay inside the pill shape. */}
+        <clipPath id={`tally-clip-${tally.resolution.id}`}>
+          <rect x={0} y={0} width={100} height={height} rx={4} ry={4} />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#tally-clip-${tally.resolution.id})`}>
+        {/* Neutral track behind any gaps (shouldn't render since segments sum to 100,
+            but acts as a safety net for theme consistency). */}
+        <rect x={0} y={0} width={100} height={height} fill="transparent" />
+        {placed.map((s) => (
+          <rect
+            key={s.vote}
+            x={s.x}
+            y={0}
+            width={s.pct}
+            height={height}
+            fill={`url(#${patternId(s.vote, "tally")})`}
           />
-        );
-      })}
-    </div>
+        ))}
+        {/* Thin dividers between segments so category boundaries read even
+            when two similar-weight colours sit side by side. */}
+        {placed.slice(1).map((s) => (
+          <line
+            key={`div-${s.vote}`}
+            x1={s.x}
+            x2={s.x}
+            y1={0}
+            y2={height}
+            stroke={dividerColor}
+            strokeWidth={1}
+            vectorEffect="non-scaling-stroke"
+          />
+        ))}
+      </g>
+    </svg>
   );
 }
 
@@ -138,9 +179,10 @@ function InvestorPills({ resolutionId, reduced }: InvestorPillsProps) {
 type CardProps = {
   tally: PerResolutionTally;
   reduced: boolean;
+  dividerColor: string;
 };
 
-function ResolutionCard({ tally, reduced }: CardProps) {
+function ResolutionCard({ tally, reduced, dividerColor }: CardProps) {
   const { resolution: r, For, Against, Abstain } = tally;
   const plurality = getPluralityLabel(tally);
   const pluralityAccent = plurality.includes("For")
@@ -190,7 +232,7 @@ function ResolutionCard({ tally, reduced }: CardProps) {
             className="absolute bottom-0 left-0 top-0 w-0.5 origin-top scale-y-0 transition-transform duration-300 group-hover:scale-y-100 group-focus-within:scale-y-100"
             style={{ backgroundColor: pluralityAccent }}
           />
-          <MiniTallyBar tally={tally} />
+          <MiniTallyBar tally={tally} dividerColor={dividerColor} />
 
           <p className="mt-2 text-xs text-neutral">
             <span className="font-semibold" style={{ color: VOTE_COLOURS.For }}>
@@ -225,15 +267,32 @@ function ResolutionCard({ tally, reduced }: CardProps) {
 
 export default function ResolutionsSection() {
   const reduced = useReducedMotion();
+  const tokens = useThemeTokens();
+  // Match the chart: overlay darkens on light theme, lightens on dark theme.
+  const overlayColor = tokens.isDark
+    ? "rgba(255, 255, 255, 0.4)"
+    : "rgba(14, 32, 67, 0.35)";
 
   return (
     <motion.section
-      className="mt-8 rounded-2xl border border-canvas-alt bg-surface/60 p-6 sm:mt-10 sm:p-8"
+      className="rounded-2xl border border-canvas-alt bg-surface/60 p-6 sm:p-8"
       variants={reduced ? undefined : container}
       initial={reduced ? false : "hidden"}
       whileInView={reduced ? undefined : "show"}
       viewport={{ once: true, margin: "-40px" }}
     >
+      {/* Single <defs> block for the mini tally bars on all five cards. Keeps
+          the DOM lean compared to repeating patterns per card. */}
+      <svg
+        width={0}
+        height={0}
+        className="absolute"
+        aria-hidden
+        style={{ position: "absolute" }}
+      >
+        <VotePatternDefs scope="tally" overlayColor={overlayColor} />
+      </svg>
+
       <motion.p
         variants={reduced ? undefined : cardReveal}
         className="text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-500"
@@ -255,7 +314,12 @@ export default function ResolutionsSection() {
 
       <ul className="mt-6 grid gap-4 sm:mt-8 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
         {tallies.map((t) => (
-          <ResolutionCard key={t.resolution.id} tally={t} reduced={!!reduced} />
+          <ResolutionCard
+            key={t.resolution.id}
+            tally={t}
+            reduced={!!reduced}
+            dividerColor={tokens.surface}
+          />
         ))}
       </ul>
     </motion.section>
