@@ -20,11 +20,6 @@ export const metadata: Metadata = {
   title: "OxProx - Investor Voting",
   description:
     "How institutional investors voted across five shareholder resolutions.",
-  icons: {
-    icon: "/brand/oxprox-x.svg",
-    shortcut: "/brand/oxprox-x.svg",
-    apple: "/brand/oxprox-x.svg",
-  },
 };
 
 // Runs synchronously before hydration to prevent a flash of the wrong theme.
