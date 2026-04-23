@@ -109,3 +109,78 @@ export function getInvestorSummary(): InvestorSummaryRow[] {
     };
   });
 }
+
+export type PerResolutionTally = {
+  resolution: Resolution;
+  For: number;
+  Against: number;
+  Abstain: number;
+  total: number;
+};
+
+/**
+ * Inverts the matrix: one row per resolution with counts across investors.
+ */
+export function getPerResolutionTally(): PerResolutionTally[] {
+  return RESOLUTIONS.map((resolution) => {
+    const tally = { For: 0, Against: 0, Abstain: 0 } as Record<Vote, number>;
+    for (const investor of INVESTORS) {
+      const v = VOTES[resolution.id][investor];
+      tally[v] += 1;
+    }
+    return {
+      resolution,
+      For: tally.For,
+      Against: tally.Against,
+      Abstain: tally.Abstain,
+      total: INVESTORS.length,
+    };
+  });
+}
+
+export type KeyInsights = {
+  totalVotes: number;
+  investorCount: number;
+  resolutionCount: number;
+  abstainCount: number;
+  mostSupported: PerResolutionTally;
+  mostOpposed: PerResolutionTally;
+  mostDivided: PerResolutionTally;
+};
+
+/**
+ * Derives headline signals from the vote matrix. Deterministic — ties are
+ * broken by resolution order in RESOLUTIONS.
+ */
+export function getKeyInsights(): KeyInsights {
+  const tallies = getPerResolutionTally();
+  const investorCount = INVESTORS.length;
+  const resolutionCount = RESOLUTIONS.length;
+
+  let mostSupported = tallies[0];
+  let mostOpposed = tallies[0];
+  let mostDivided = tallies[0];
+  let abstainCount = 0;
+
+  // Divided score: how balanced For vs Against are (ignoring abstain).
+  // Lower |For - Against| = more divided; ties broken by higher total engaged.
+  const dividedScore = (t: PerResolutionTally) =>
+    Math.abs(t.For - t.Against) - (t.For + t.Against) / 1000;
+
+  for (const t of tallies) {
+    if (t.For > mostSupported.For) mostSupported = t;
+    if (t.Against > mostOpposed.Against) mostOpposed = t;
+    if (dividedScore(t) < dividedScore(mostDivided)) mostDivided = t;
+    abstainCount += t.Abstain;
+  }
+
+  return {
+    totalVotes: investorCount * resolutionCount,
+    investorCount,
+    resolutionCount,
+    abstainCount,
+    mostSupported,
+    mostOpposed,
+    mostDivided,
+  };
+}

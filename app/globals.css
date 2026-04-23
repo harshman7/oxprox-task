@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
-@theme inline {
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
 
@@ -30,6 +32,36 @@
   --color-graph-12: #d699f9;
 }
 
+:root {
+  color-scheme: light;
+  /* Mirror of the theme core palette — used by non-Tailwind consumers
+     (e.g. Recharts via useThemeTokens). Keep values in sync with @theme. */
+  --ox-ink: #0e2043;
+  --ox-neutral: #66625e;
+  --ox-canvas-alt: #e8e4e1;
+  --ox-canvas: #f2f1ef;
+  --ox-surface: #ffffff;
+}
+
+:root.dark {
+  color-scheme: dark;
+
+  /* Override the Tailwind theme tokens so every text-ink / bg-surface /
+     border-canvas-alt utility flips automatically. */
+  --color-ink: #e7ecff;
+  --color-neutral: #9aa3be;
+  --color-canvas-alt: #182547;
+  --color-canvas: #0a1631;
+  --color-surface: #111e3f;
+
+  /* Mirror for the JS-side hook. */
+  --ox-ink: #e7ecff;
+  --ox-neutral: #9aa3be;
+  --ox-canvas-alt: #182547;
+  --ox-canvas: #0a1631;
+  --ox-surface: #111e3f;
+}
+
 html,
 body {
   background: var(--color-canvas);
@@ -38,6 +70,14 @@ body {
 
 body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  transition: background-color 0.35s ease, color 0.35s ease;
+}
+
+/* View Transitions API: crossfade the root on theme swap */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 350ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -5,6 +5,7 @@ import {
   BarChart,
   CartesianGrid,
   Legend,
+  Rectangle,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -20,6 +21,7 @@ import {
   type InvestorSummaryRow,
   type Vote,
 } from "@/app/data/votes";
+import { useThemeTokens } from "@/app/hooks/useThemeTokens";
 
 const VOTE_COLOURS: Record<Vote, string> = {
   For: "#25C3B2",
@@ -35,6 +37,37 @@ const chartData: ChartDatum[] = data.map((row) => ({
   ...row,
   label: row.investor.replace("Investor ", ""),
 }));
+
+// In a stacked column, the "visible top" is the last category (in stack order
+// bottom → top) that actually has a non-zero value for that row. We round the
+// top corners of that segment only — so bars whose topmost category is
+// For or Against still get rounded caps.
+function topVoteFor(row: ChartDatum): Vote | null {
+  for (let i = VOTE_TYPES.length - 1; i >= 0; i -= 1) {
+    if (row[VOTE_TYPES[i]] > 0) return VOTE_TYPES[i];
+  }
+  return null;
+}
+
+type BarShapeProps = {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  fill?: string;
+  payload?: ChartDatum;
+};
+
+function makeRoundedTopShape(vote: Vote) {
+  const Shape = (props: BarShapeProps) => {
+    const { payload } = props;
+    const isTop = payload ? topVoteFor(payload) === vote : false;
+    const radius = isTop ? [6, 6, 0, 0] : [0, 0, 0, 0];
+    return <Rectangle {...props} radius={radius as [number, number, number, number]} />;
+  };
+  Shape.displayName = `RoundedTop(${vote})`;
+  return Shape;
+}
 
 function VotesTooltip({ active, payload }: TooltipContentProps) {
   if (!active || !payload || payload.length === 0) return null;
@@ -86,30 +119,35 @@ function VotesTooltip({ active, payload }: TooltipContentProps) {
 
 export default function VotesChart() {
   const reduced = useReducedMotion();
+  const tokens = useThemeTokens();
   const animate = !reduced;
   return (
     <div
       role="img"
       aria-label="Stacked bar chart of how investors A through E voted across five proposals, grouped by For, Against, and Abstain"
-      className="h-[420px] w-full sm:h-[460px]"
+      className="h-[360px] w-full sm:h-[440px]"
     >
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+        initialDimension={{ width: 800, height: 400 }}
+      >
         <BarChart
           data={chartData}
-          margin={{ top: 16, right: 24, bottom: 32, left: 8 }}
+          margin={{ top: 24, right: 16, bottom: 32, left: 0 }}
           barCategoryGap="28%"
         >
-          <CartesianGrid stroke="#E8E4E1" vertical={false} />
+          <CartesianGrid stroke={tokens.canvasAlt} vertical={false} />
           <XAxis
             dataKey="label"
             tickLine={false}
-            axisLine={{ stroke: "#E8E4E1" }}
-            tick={{ fill: "#0E2043", fontSize: 13 }}
+            axisLine={{ stroke: tokens.canvasAlt }}
+            tick={{ fill: tokens.ink, fontSize: 13 }}
             label={{
               value: "Investor",
               position: "insideBottom",
               offset: -16,
-              fill: "#66625E",
+              fill: tokens.neutral,
               fontSize: 13,
             }}
           />
@@ -118,28 +156,38 @@ export default function VotesChart() {
             domain={[0, 5]}
             ticks={[0, 1, 2, 3, 4, 5]}
             tickLine={false}
-            axisLine={{ stroke: "#E8E4E1" }}
-            tick={{ fill: "#0E2043", fontSize: 13 }}
+            axisLine={{ stroke: tokens.canvasAlt }}
+            tick={{ fill: tokens.ink, fontSize: 13 }}
             label={{
               value: `Votes (out of ${RESOLUTIONS.length})`,
               angle: -90,
               position: "insideLeft",
               offset: 16,
-              fill: "#66625E",
+              fill: tokens.neutral,
               fontSize: 13,
               style: { textAnchor: "middle" },
             }}
           />
           <Tooltip
             content={(props) => <VotesTooltip {...props} />}
-            cursor={{ fill: "#0E2043", fillOpacity: 0.04 }}
+            cursor={{
+              fill: tokens.ink,
+              fillOpacity: tokens.isDark ? 0.12 : 0.04,
+            }}
+            allowEscapeViewBox={{ x: false, y: false }}
+            wrapperStyle={{ outline: "none" }}
           />
           <Legend
             verticalAlign="top"
-            align="right"
-            height={32}
+            align="center"
+            height={36}
             iconType="circle"
-            wrapperStyle={{ fontSize: 13, color: "#0E2043" }}
+            iconSize={10}
+            wrapperStyle={{
+              fontSize: 13,
+              color: tokens.ink,
+              paddingBottom: 8,
+            }}
           />
           {VOTE_TYPES.map((vote, idx) => (
             <Bar
@@ -148,9 +196,8 @@ export default function VotesChart() {
               name={vote}
               stackId="votes"
               fill={VOTE_COLOURS[vote]}
-              radius={
-                idx === VOTE_TYPES.length - 1 ? [6, 6, 0, 0] : [0, 0, 0, 0]
-              }
+              maxBarSize={72}
+              shape={makeRoundedTopShape(vote)}
               isAnimationActive={animate}
               animationBegin={200 + idx * 120}
               animationDuration={700}
