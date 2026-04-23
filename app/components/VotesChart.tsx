@@ -11,6 +11,7 @@ import {
   YAxis,
 } from "recharts";
 import type { TooltipContentProps } from "recharts";
+import { useReducedMotion } from "framer-motion";
 
 import {
   getInvestorSummary,
@@ -84,6 +85,8 @@ function VotesTooltip({ active, payload }: TooltipContentProps) {
 }
 
 export default function VotesChart() {
+  const reduced = useReducedMotion();
+  const animate = !reduced;
   return (
     <div
       role="img"
@@ -148,7 +151,10 @@ export default function VotesChart() {
               radius={
                 idx === VOTE_TYPES.length - 1 ? [6, 6, 0, 0] : [0, 0, 0, 0]
               }
-              isAnimationActive={false}
+              isAnimationActive={animate}
+              animationBegin={200 + idx * 120}
+              animationDuration={700}
+              animationEasing="ease-out"
             />
           ))}
         </BarChart>
