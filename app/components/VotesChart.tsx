@@ -173,10 +173,10 @@ export default function VotesChart() {
     <div
       role="img"
       aria-label="Stacked bar chart of how investors A through E voted across five proposals, grouped by For, Against, and Abstain. Segments are also distinguished by fill pattern - For uses horizontal lines, Against uses dense diagonals, Abstain uses dots - so the chart remains readable without relying on colour alone."
-      className="flex w-full flex-col gap-3 sm:h-[440px]"
+      className="w-full"
     >
       <CustomLegend overlayColor={overlayColor} textColor={tokens.ink} />
-      <div className="min-h-[320px] w-full flex-1 sm:min-h-0">
+      <div className="mt-3 h-[340px] w-full sm:h-[400px]">
         <ResponsiveContainer
           width="100%"
           height="100%"

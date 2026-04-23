@@ -14,7 +14,7 @@ import { HOVER_SPRING } from "@/app/components/motion/hover";
 const VotesChart = dynamic(() => import("@/app/components/VotesChart"), {
   ssr: false,
   loading: () => (
-    <div className="min-h-[400px] w-full sm:h-[440px]" aria-hidden />
+    <div className="h-[380px] w-full sm:h-[440px]" aria-hidden />
   ),
 });
 

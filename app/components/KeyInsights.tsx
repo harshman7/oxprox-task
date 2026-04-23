@@ -114,7 +114,7 @@ export default function KeyInsights() {
 
   return (
     <motion.section
-      className="rounded-2xl border border-[#132750] bg-ink p-6 text-white shadow-sm sm:p-8"
+      className="rounded-2xl border border-[#132750] bg-[#0e2043] p-6 text-white shadow-sm dark:bg-[#0b1632] dark:ring-1 dark:ring-white/10 sm:p-8"
       variants={reduced ? undefined : container}
       initial={reduced ? false : "hidden"}
       whileInView={reduced ? undefined : "show"}
