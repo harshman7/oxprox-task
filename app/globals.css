@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+
+  /* OxProx core palette (Brand Guidelines v1, Sept 2025) */
+  --color-ink: #0e2043;
+  --color-blue-500: #527cee;
+  --color-blue-300: #8abcff;
+  --color-blue-100: #e1efff;
+  --color-neutral: #66625e;
+  --color-canvas-alt: #e8e4e1;
+  --color-canvas: #f2f1ef;
+  --color-surface: #ffffff;
+  --color-accent: #ff6948;
+
+  /* OxProx graph palette — use for categorical series */
+  --color-graph-1: #0e2043;
+  --color-graph-2: #527cee;
+  --color-graph-3: #8abcff;
+  --color-graph-4: #597b79;
+  --color-graph-5: #25c3b2;
+  --color-graph-6: #989a37;
+  --color-graph-7: #b8d12c;
+  --color-graph-8: #ff6948;
+  --color-graph-9: #e6ac12;
+  --color-graph-10: #9d013d;
+  --color-graph-11: #d7559e;
+  --color-graph-12: #d699f9;
+}
+
+html,
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
