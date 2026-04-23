@@ -13,7 +13,9 @@ import { HOVER_SPRING } from "@/app/components/motion/hover";
 // to keep layout stable.
 const VotesChart = dynamic(() => import("@/app/components/VotesChart"), {
   ssr: false,
-  loading: () => <div className="h-[360px] w-full sm:h-[440px]" aria-hidden />,
+  loading: () => (
+    <div className="min-h-[400px] w-full sm:h-[440px]" aria-hidden />
+  ),
 });
 
 const EASE = [0.22, 1, 0.36, 1] as const;

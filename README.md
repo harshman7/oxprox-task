@@ -4,7 +4,9 @@ A small interactive web page that shows how five fictional institutional
 investors voted across five shareholder resolutions. Built for the
 OxProx Full Stack Developer take-home (Task 1 — Data Visualisation).
 
-**Live demo:** _replace with your Vercel URL, e.g._ `https://oxprox-task.vercel.app`
+**Live demo:** [https://oxprox-task.vercel.app](https://oxprox-task.vercel.app)
+
+**Direct link:** [Open the deployed app](https://oxprox-task.vercel.app)
 
 ## What it does
 

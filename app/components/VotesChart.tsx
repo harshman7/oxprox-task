@@ -4,7 +4,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Legend,
   Rectangle,
   ResponsiveContainer,
   Tooltip,
@@ -139,16 +138,17 @@ type LegendContentProps = {
 function CustomLegend({ overlayColor, textColor }: LegendContentProps) {
   return (
     <ul
-      className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pb-2"
+      className="flex w-full flex-wrap items-center justify-center gap-x-4 gap-y-2 px-1 sm:gap-x-5"
       style={{ color: textColor, fontSize: 13 }}
     >
       {VOTE_TYPES.map((vote) => (
         <li key={vote} className="flex items-center gap-2">
           <PatternSwatch vote={vote} size={14} overlayColor={overlayColor} />
           <span className="font-medium">{vote}</span>
-          <span className="text-xs uppercase tracking-[0.12em] opacity-60">
+          <span className="hidden text-xs uppercase tracking-[0.12em] opacity-60 sm:inline">
             {PATTERN_HINT[vote]}
           </span>
+          <span className="sr-only">{PATTERN_HINT[vote]}</span>
         </li>
       ))}
     </ul>
@@ -173,89 +173,82 @@ export default function VotesChart() {
     <div
       role="img"
       aria-label="Stacked bar chart of how investors A through E voted across five proposals, grouped by For, Against, and Abstain. Segments are also distinguished by fill pattern - For uses horizontal lines, Against uses dense diagonals, Abstain uses dots - so the chart remains readable without relying on colour alone."
-      className="h-[360px] w-full sm:h-[440px]"
+      className="flex w-full flex-col gap-3 sm:h-[440px]"
     >
-      <ResponsiveContainer
-        width="100%"
-        height="100%"
-        initialDimension={{ width: 800, height: 400 }}
-      >
-        <BarChart
-          data={chartData}
-          margin={{ top: 24, right: 16, bottom: 32, left: 0 }}
-          barCategoryGap="28%"
+      <CustomLegend overlayColor={overlayColor} textColor={tokens.ink} />
+      <div className="min-h-[320px] w-full flex-1 sm:min-h-0">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          initialDimension={{ width: 800, height: 360 }}
         >
-          <VotePatternDefs scope="chart" overlayColor={overlayColor} />
-          <CartesianGrid stroke={tokens.canvasAlt} vertical={false} />
-          <XAxis
-            dataKey="label"
-            tickLine={false}
-            axisLine={{ stroke: tokens.canvasAlt }}
-            tick={{ fill: tokens.ink, fontSize: 13 }}
-            label={{
-              value: "Investor",
-              position: "insideBottom",
-              offset: -16,
-              fill: tokens.neutral,
-              fontSize: 13,
-            }}
-          />
-          <YAxis
-            allowDecimals={false}
-            domain={[0, 5]}
-            ticks={[0, 1, 2, 3, 4, 5]}
-            tickLine={false}
-            axisLine={{ stroke: tokens.canvasAlt }}
-            tick={{ fill: tokens.ink, fontSize: 13 }}
-            label={{
-              value: `Votes (out of ${RESOLUTIONS.length})`,
-              angle: -90,
-              position: "insideLeft",
-              offset: 16,
-              fill: tokens.neutral,
-              fontSize: 13,
-              style: { textAnchor: "middle" },
-            }}
-          />
-          <Tooltip
-            content={(props) => (
-              <VotesTooltip {...props} overlayColor={overlayColor} />
-            )}
-            cursor={{
-              fill: tokens.ink,
-              fillOpacity: tokens.isDark ? 0.12 : 0.04,
-            }}
-            allowEscapeViewBox={{ x: false, y: false }}
-            wrapperStyle={{ outline: "none" }}
-          />
-          <Legend
-            verticalAlign="top"
-            align="center"
-            height={40}
-            content={() => (
-              <CustomLegend
-                overlayColor={overlayColor}
-                textColor={tokens.ink}
-              />
-            )}
-          />
-          {VOTE_TYPES.map((vote, idx) => (
-            <Bar
-              key={vote}
-              dataKey={vote}
-              name={vote}
-              stackId="votes"
-              fill={`url(#${patternId(vote, "chart")})`}
-              maxBarSize={72}
-              shape={makeRoundedTopShape(vote, segmentStroke)}
-              isAnimationActive={animate}
-              animationBegin={200 + idx * 120}
-              animationDuration={700}
-              animationEasing="ease-out"
+          <BarChart
+            data={chartData}
+            margin={{ top: 8, right: 12, bottom: 32, left: 4 }}
+            barCategoryGap="28%"
+          >
+            <VotePatternDefs scope="chart" overlayColor={overlayColor} />
+            <CartesianGrid stroke={tokens.canvasAlt} vertical={false} />
+            <XAxis
+              dataKey="label"
+              tickLine={false}
+              axisLine={{ stroke: tokens.canvasAlt }}
+              tick={{ fill: tokens.ink, fontSize: 13 }}
+              label={{
+                value: "Investor",
+                position: "insideBottom",
+                offset: -16,
+                fill: tokens.neutral,
+                fontSize: 13,
+              }}
             />
-          ))}
-        </BarChart>
-      </ResponsiveContainer>
+            <YAxis
+              allowDecimals={false}
+              domain={[0, 5]}
+              ticks={[0, 1, 2, 3, 4, 5]}
+              tickLine={false}
+              axisLine={{ stroke: tokens.canvasAlt }}
+              tick={{ fill: tokens.ink, fontSize: 13 }}
+              width={56}
+              label={{
+                value: `Votes (out of ${RESOLUTIONS.length})`,
+                angle: -90,
+                position: "insideLeft",
+                offset: 16,
+                fill: tokens.neutral,
+                fontSize: 13,
+                style: { textAnchor: "middle" },
+              }}
+            />
+            <Tooltip
+              content={(props) => (
+                <VotesTooltip {...props} overlayColor={overlayColor} />
+              )}
+              cursor={{
+                fill: tokens.ink,
+                fillOpacity: tokens.isDark ? 0.12 : 0.04,
+              }}
+              allowEscapeViewBox={{ x: false, y: false }}
+              wrapperStyle={{ outline: "none" }}
+            />
+            {VOTE_TYPES.map((vote, idx) => (
+              <Bar
+                key={vote}
+                dataKey={vote}
+                name={vote}
+                stackId="votes"
+                fill={`url(#${patternId(vote, "chart")})`}
+                maxBarSize={72}
+                shape={makeRoundedTopShape(vote, segmentStroke)}
+                isAnimationActive={animate}
+                animationBegin={200 + idx * 120}
+                animationDuration={700}
+                animationEasing="ease-out"
+              />
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }
