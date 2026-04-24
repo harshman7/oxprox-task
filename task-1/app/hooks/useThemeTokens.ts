@@ -1,3 +1,9 @@
+/**
+ * Subscribes to the live OxProx palette on `:root` whenever `<html>` gains or
+ * loses the `dark` class. Bridges Tailwind CSS variables to Recharts and other
+ * libs that only accept inline colour strings, not `var(--token)`.
+ */
+
 "use client";
 
 import { useSyncExternalStore } from "react";
@@ -18,6 +24,7 @@ const DEFAULTS: ThemeTokens = {
   isDark: false,
 };
 
+/** Reads `--ox-*` from computed styles (SSR-safe: returns DEFAULTS on server). */
 function read(): ThemeTokens {
   if (typeof document === "undefined") return DEFAULTS;
   const root = document.documentElement;
@@ -69,9 +76,9 @@ function subscribe(callback: () => void): () => void {
 }
 
 /**
- * Reads the live OxProx theme tokens from the root element and re-reads them
- * whenever the `dark` class flips on `<html>`. Useful for third-party libraries
- * like Recharts that don't read CSS custom properties directly.
+ * Returns the current theme tokens and re-renders when `dark` toggles on
+ * `<html>`. Safe under React 18/19 strict mode and SSR (server snapshot is
+ * light-theme defaults).
  */
 export function useThemeTokens(): ThemeTokens {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);

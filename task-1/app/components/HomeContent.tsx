@@ -1,3 +1,9 @@
+/**
+ * Main landing content: hero, reading guide, dynamically loaded chart, key
+ * insights, and per-resolution cards. Owns Framer Motion orchestration and
+ * vertical rhythm (`space-y-*`) between sections.
+ */
+
 "use client";
 
 import { motion, useReducedMotion, type Variants } from "framer-motion";
@@ -18,8 +24,10 @@ const VotesChart = dynamic(() => import("@/app/components/VotesChart"), {
   ),
 });
 
+/** Shared easing curve for hero + reveal animations (matches brand motion feel). */
 const EASE = [0.22, 1, 0.36, 1] as const;
 
+/** Stagger container for the hero block only. */
 const heroContainer: Variants = {
   hidden: { opacity: 1 },
   show: {
@@ -28,26 +36,34 @@ const heroContainer: Variants = {
   },
 };
 
+/** Eyebrow line fades up into place. */
 const heroEyebrow: Variants = {
   hidden: { opacity: 0, y: 8 },
   show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE } },
 };
 
+/**
+ * Each headline line slides up from inside an `overflow-hidden` wrapper
+ * (mask reveal). `y: "110%"` starts the text just below the clip edge.
+ */
 const heroLine: Variants = {
   hidden: { y: "110%" },
   show: { y: "0%", transition: { duration: 0.75, ease: EASE } },
 };
 
+/** Supporting paragraph under the hero. */
 const heroLede: Variants = {
   hidden: { opacity: 0, y: 14 },
   show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE, delay: 0.1 } },
 };
 
+/** Scroll-triggered fade/slide for sections below the fold. */
 const revealItem: Variants = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
 };
 
+/** Copy for the three-column reading guide on desktop (stacks on mobile). */
 const readingGuide: {
   label: string;
   title: string;
@@ -76,9 +92,12 @@ const HERO_LINES = [
   "across five resolutions.",
 ];
 
+/** Composes all primary sections of the home page between header and footer. */
 export default function HomeContent() {
   const reduced = useReducedMotion();
 
+  // When reduced motion is requested, drop variant objects entirely so children
+  // mount in their final state without animation hooks firing.
   const maybe = <T,>(variants: T): T | undefined =>
     reduced ? undefined : variants;
 

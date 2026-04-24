@@ -1,3 +1,9 @@
+/**
+ * Narrative "what the chart says" section: four stacked insight cards with
+ * animated count-ups. Background uses fixed hex navy (`#0e2043` / dark variant)
+ * because `bg-ink` would flip to a light token in dark mode and wash out white text.
+ */
+
 "use client";
 
 import { motion, useReducedMotion, type Variants } from "framer-motion";
@@ -26,6 +32,7 @@ const card: Variants = {
 
 const insights = getKeyInsights();
 
+/** One row in the insight list: metric, prose, and accent colour for the rail + icon. */
 type NarrativeInsight = {
   id: string;
   label: string;
@@ -37,6 +44,10 @@ type NarrativeInsight = {
   detail: string;
 };
 
+/**
+ * Returns investor letters (A..E) who cast `vote` on the given resolution.
+ * Used to personalise the narrative copy under each headline stat.
+ */
 function investorsFor(resolution: Resolution, vote: "For" | "Against" | "Abstain"): string[] {
   return INVESTORS.filter((inv) => VOTES[resolution.id][inv] === vote).map((inv) =>
     inv.replace("Investor ", "")
@@ -109,6 +120,7 @@ const narratives: NarrativeInsight[] = [
   },
 ];
 
+/** Full-width insight stack derived from `getKeyInsights()`. */
 export default function KeyInsights() {
   const reduced = useReducedMotion();
 

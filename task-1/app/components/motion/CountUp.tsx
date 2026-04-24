@@ -1,3 +1,8 @@
+/**
+ * Animated integer display that counts from zero (or jumps instantly) when the
+ * element scrolls into view. Used in KeyInsights for headline metrics.
+ */
+
 "use client";
 
 import {
@@ -9,12 +14,20 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 type Props = {
+  /** Target number shown when the animation completes. */
   value: number;
+  /** Duration in seconds when motion is allowed (ignored when reduced motion). */
   duration?: number;
   className?: string;
+  /** Optional formatter (e.g. locale or padding). Receives rounded integers. */
   format?: (n: number) => string;
 };
 
+/**
+ * Renders `value` inside a span. When the span enters the viewport, animates
+ * from 0 to `value` unless `prefers-reduced-motion` is set, in which case the
+ * final value appears immediately with zero-duration animation.
+ */
 export default function CountUp({
   value,
   duration = 0.9,

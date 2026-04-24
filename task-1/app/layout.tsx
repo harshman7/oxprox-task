@@ -1,3 +1,9 @@
+/**
+ * Root layout: loads OxProx brand fonts, global CSS tokens, and a blocking
+ * inline script so the correct light/dark theme applies before first paint
+ * (avoids a flash of the wrong background). Children are the App Router pages.
+ */
+
 import type { Metadata } from "next";
 import { DM_Serif_Display, IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
@@ -22,7 +28,11 @@ export const metadata: Metadata = {
     "How institutional investors voted across five shareholder resolutions.",
 };
 
-// Runs synchronously before hydration to prevent a flash of the wrong theme.
+/**
+ * Runs synchronously in <head> before React hydrates. Reads `localStorage`
+ * (`ox-theme`) or falls back to `prefers-color-scheme`, then toggles the
+ * `dark` class on `<html>` so Tailwind's `@custom-variant dark` matches paint.
+ */
 const themeInitScript = `
 (function () {
   try {
@@ -42,6 +52,8 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      // Script above mutates className before hydration; this suppresses the
+      // server/client mismatch warning on <html>.
       suppressHydrationWarning
       className={`${dmSerifDisplay.variable} ${ibmPlexSans.variable} h-full antialiased`}
     >

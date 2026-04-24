@@ -1,3 +1,10 @@
+/**
+ * Light/dark theme control. Persists choice to `localStorage` (`ox-theme`),
+ * stays in sync with the inline script in `layout.tsx` via a MutationObserver,
+ * and optionally wraps the class flip in `document.startViewTransition` for a
+ * smooth crossfade (skipped when `prefers-reduced-motion` is set).
+ */
+
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -8,6 +15,7 @@ type Theme = "light" | "dark";
 
 const STORAGE_KEY = "ox-theme";
 
+/** Applies `dark` class on `<html>` — single source of truth for Tailwind dark mode. */
 function apply(next: Theme) {
   const root = document.documentElement;
   if (next === "dark") root.classList.add("dark");
@@ -42,6 +50,10 @@ const noopSubscribe = () => () => {};
 const getMountedClient = () => true;
 const getMountedServer = () => false;
 
+/**
+ * Accessible icon button that toggles theme, persists to storage, and respects
+ * reduced motion (no View Transition, simpler icon swap).
+ */
 export default function ThemeToggle() {
   const theme = useSyncExternalStore(
     subscribeTheme,

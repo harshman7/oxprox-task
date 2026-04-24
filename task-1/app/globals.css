@@ -1,7 +1,23 @@
+/*
+ * Global styles for the OxProx take-home (Task 1).
+ *
+ * Tailwind v4: `@theme` registers design tokens. `:root` / `:root.dark` mirror
+ * the same palette into `--ox-*` custom properties so client hooks (e.g.
+ * useThemeTokens) and Recharts can read live colours without importing Tailwind.
+ *
+ * Dark mode is class-based on <html class="dark"> via `@custom-variant dark`.
+ */
+
 @import "tailwindcss";
 
+/* -------------------------------------------------------------------------- */
+/* Dark variant: any element under .dark matches `dark:` utilities */
+/* -------------------------------------------------------------------------- */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* -------------------------------------------------------------------------- */
+/* Design tokens (light defaults) */
+/* -------------------------------------------------------------------------- */
 @theme {
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
@@ -32,6 +48,9 @@
   --color-graph-12: #d699f9;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Light theme + JS-readable mirrors */
+/* -------------------------------------------------------------------------- */
 :root {
   color-scheme: light;
   /* Mirror of the theme core palette — used by non-Tailwind consumers
@@ -43,6 +62,9 @@
   --ox-surface: #ffffff;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Dark theme: overrides both Tailwind theme vars and --ox-* mirrors */
+/* -------------------------------------------------------------------------- */
 :root.dark {
   color-scheme: dark;
 
@@ -62,6 +84,9 @@
   --ox-surface: #111e3f;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Document baseline */
+/* -------------------------------------------------------------------------- */
 html,
 body {
   background: var(--color-canvas);
@@ -73,13 +98,18 @@ body {
   transition: background-color 0.35s ease, color 0.35s ease;
 }
 
-/* View Transitions API: crossfade the root on theme swap */
+/* -------------------------------------------------------------------------- */
+/* View Transitions API: crossfade the root on theme swap (ThemeToggle) */
+/* -------------------------------------------------------------------------- */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 350ms;
   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* -------------------------------------------------------------------------- */
+/* Accessibility: honour OS reduced-motion */
+/* -------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -1,3 +1,10 @@
+/**
+ * SVG pattern primitives for vote-category fills. Colours alone fail colour-blind
+ * checks; pairing each vote type with a distinct hatch/dot pattern keeps bars,
+ * legends, and tooltips decodable in monochrome. Used by VotesChart,
+ * ResolutionsSection mini bars, and inline swatches.
+ */
+
 "use client";
 
 import { useId } from "react";
@@ -15,10 +22,13 @@ export const VOTE_COLOURS: Record<Vote, string> = {
   Abstain: "#E6AC12",
 };
 
-// Pattern IDs are suffixed so multiple instances (chart + swatches + mini bar)
-// don't stomp on each other when several <defs> exist on the same page.
+/**
+ * Namespace for SVG pattern `id`s so multiple `<defs>` on one page (chart +
+ * tally + swatches) never collide. Each scope gets its own `ox-pattern-{scope}-*`.
+ */
 export type PatternScope = "chart" | "swatch" | "tally";
 
+/** Stable id string for `fill="url(#...)"` references inside a given scope. */
 export function patternId(vote: Vote, scope: PatternScope): string {
   return `ox-pattern-${scope}-${vote.toLowerCase()}`;
 }
@@ -29,7 +39,7 @@ type DefsProps = {
 };
 
 /**
- * SVG <defs> containing three pattern fills, one per vote type:
+ * SVG `<defs>` containing three pattern fills, one per vote type:
  *   For     — horizontal hatch (light, positive-feeling)
  *   Against — dense diagonal hatch
  *   Abstain — dotted grid
@@ -97,8 +107,8 @@ type SwatchProps = {
 /**
  * Tiny inline SVG showing the same pattern used in the chart. Used in tooltip
  * rows, legend items, and anywhere else a colour chip would be ambiguous for
- * colour-vision-deficient users. Each instance carries its own <defs> since
- * the parent DOM may or may not include the chart-scope <defs>.
+ * colour-vision-deficient users. Each instance carries its own `<defs>` since
+ * the parent DOM may or may not include the chart-scope `<defs>`.
  */
 export function PatternSwatch({
   vote,
@@ -164,8 +174,9 @@ export function PatternSwatch({
 }
 
 /**
- * Short one-word hint surfaced once in the legend so the pattern meaning is
- * legible without needing to sample colours.
+ * Short one-word hint surfaced in the desktop legend so the pattern meaning is
+ * legible without needing to sample colours. Hidden on small screens in the UI
+ * but mirrored in `sr-only` for screen readers.
  */
 export const PATTERN_HINT: Record<Vote, string> = {
   For: "Solid",

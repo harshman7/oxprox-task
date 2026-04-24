@@ -1,5 +1,12 @@
+/**
+ * Brand-forward footer: white wordmark on a locked navy panel with a subtle
+ * OxProx pattern. `dark:bg-[#0b1632]` keeps contrast consistent when global
+ * `bg-ink` would otherwise flip to a light token in dark mode.
+ */
+
 import Image from "next/image";
 
+/** Closing band with disclaimer copy and pattern texture. */
 export default function SiteFooter() {
   return (
     <footer className="group/footer relative mt-16 overflow-hidden bg-ink text-white dark:bg-[#0b1632]">

@@ -1,3 +1,12 @@
+/**
+ * Primary data visualisation: 100% stacked bar chart of votes per investor
+ * (For / Against / Abstain) using Recharts. Legend is rendered as plain HTML
+ * above the chart so wrapped rows never overlap the plot (Recharts' built-in
+ * Legend used a fixed height). Segments use SVG pattern fills from
+ * VotePatterns for colour-blind accessibility; only the topmost non-zero
+ * segment gets rounded corners via a custom `shape`.
+ */
+
 "use client";
 
 import {
@@ -38,10 +47,11 @@ const chartData: ChartDatum[] = data.map((row) => ({
   label: row.investor.replace("Investor ", ""),
 }));
 
-// In a stacked column, the "visible top" is the last category (in stack order
-// bottom → top) that actually has a non-zero value for that row. We round the
-// top corners of that segment only - so bars whose topmost category is
-// For or Against still get rounded caps.
+/**
+ * In a stacked column, the visible top is the last category in stack order
+ * (bottom to top) with a non-zero value. Used to apply corner radius only to
+ * that segment so every bar gets a clean cap, not just the "For" layer.
+ */
 function topVoteFor(row: ChartDatum): Vote | null {
   for (let i = VOTE_TYPES.length - 1; i >= 0; i -= 1) {
     if (row[VOTE_TYPES[i]] > 0) return VOTE_TYPES[i];
@@ -58,6 +68,11 @@ type BarShapeProps = {
   payload?: ChartDatum;
 };
 
+/**
+ * Factory returning a Recharts `<Rectangle>` shape that rounds only the top
+ * edge when this segment is the stack's visible top. Also draws a 1px stroke
+ * in `strokeColor` so adjacent segments separate cleanly in both themes.
+ */
 function makeRoundedTopShape(vote: Vote, strokeColor: string) {
   const Shape = (props: BarShapeProps) => {
     const { payload } = props;
@@ -80,6 +95,7 @@ type VotesTooltipProps = TooltipContentProps & {
   overlayColor: string;
 };
 
+/** Rich tooltip: investor name, vote buckets with pattern swatches, resolution list. */
 function VotesTooltip({ active, payload, overlayColor }: VotesTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
 
@@ -135,6 +151,11 @@ type LegendContentProps = {
   textColor: string;
 };
 
+/**
+ * HTML legend above the chart. Pattern hints show from `sm:` up; on narrow
+ * screens only swatch + label appear to save horizontal space (`sr-only` keeps
+ * hints for assistive tech).
+ */
 function CustomLegend({ overlayColor, textColor }: LegendContentProps) {
   return (
     <ul
@@ -155,6 +176,7 @@ function CustomLegend({ overlayColor, textColor }: LegendContentProps) {
   );
 }
 
+/** Stacked bar chart wired to live theme tokens and reduced-motion preferences. */
 export default function VotesChart() {
   const reduced = useReducedMotion();
   const tokens = useThemeTokens();
@@ -176,10 +198,13 @@ export default function VotesChart() {
       className="w-full"
     >
       <CustomLegend overlayColor={overlayColor} textColor={tokens.ink} />
+      {/* Explicit pixel height: ResponsiveContainer uses % height; parent must
+          have definite height or the chart collapses to 0 on mobile. */}
       <div className="mt-3 h-[340px] w-full sm:h-[400px]">
         <ResponsiveContainer
           width="100%"
           height="100%"
+          // Avoids SSR / first-paint width(-1) warnings when the container is not yet measured.
           initialDimension={{ width: 800, height: 360 }}
         >
           <BarChart
@@ -253,4 +278,5 @@ export default function VotesChart() {
   );
 }
 
+/** Re-export for callers that only need hex colours without importing VotePatterns. */
 export { VOTE_COLOURS };

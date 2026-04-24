@@ -1,5 +1,13 @@
+/**
+ * Typed voting dataset from the OxProx take-home brief plus pure helpers that
+ * aggregate it for the stacked bar chart (`getInvestorSummary`), resolution
+ * cards (`getPerResolutionTally`, `getPluralityLabel`), and narrative insights
+ * (`getKeyInsights`). No I/O — safe to import from server or client components.
+ */
+
 export type Vote = "For" | "Against" | "Abstain";
 
+/** Stack order for Recharts: bottom segment first, top segment last. */
 export const VOTE_TYPES: Vote[] = ["For", "Against", "Abstain"];
 
 export type Investor =
@@ -33,7 +41,7 @@ export const INVESTORS: Investor[] = [
 
 /**
  * Raw voting matrix from the task brief.
- * Rows are resolutions (P1..P5); columns are investors (A..E).
+ * Outer key: resolution id (`P1`..`P5`). Inner key: investor. Value: vote cast.
  */
 export const VOTES: Record<string, Record<Investor, Vote>> = {
   P1: {
@@ -83,8 +91,9 @@ export type InvestorSummaryRow = {
 };
 
 /**
- * Aggregates the raw VOTES matrix into one row per investor, suitable for
- * a stacked bar chart. Counts are integers; total is always RESOLUTIONS.length.
+ * Aggregates the raw `VOTES` matrix into one row per investor, suitable for
+ * a stacked bar chart. Counts are integers; `total` is always `RESOLUTIONS.length`.
+ * `breakdown` lists which resolutions fell into each vote bucket for tooltips.
  */
 export function getInvestorSummary(): InvestorSummaryRow[] {
   return INVESTORS.map((investor) => {
@@ -134,7 +143,8 @@ export function getPluralityLabel(t: PerResolutionTally): string {
 }
 
 /**
- * Inverts the matrix: one row per resolution with counts across investors.
+ * Inverts the matrix: one row per resolution with vote counts across all investors.
+ * `total` equals `INVESTORS.length` (five).
  */
 export function getPerResolutionTally(): PerResolutionTally[] {
   return RESOLUTIONS.map((resolution) => {
@@ -164,8 +174,12 @@ export type KeyInsights = {
 };
 
 /**
- * Derives headline signals from the vote matrix. Deterministic - ties are
- * broken by resolution order in RESOLUTIONS.
+ * Derives headline signals from the vote matrix. Deterministic — ties are
+ * broken by resolution order in `RESOLUTIONS`.
+ *
+ * `mostDivided` uses a score where lower `|For - Against|` wins; the tiny
+ * `(For + Against) / 1000` term breaks ties in favour of resolutions with more
+ * engaged votes (so a 2 vs 3 split beats a 0 vs 1 when both have the same gap).
  */
 export function getKeyInsights(): KeyInsights {
   const tallies = getPerResolutionTally();

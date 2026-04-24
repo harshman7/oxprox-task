@@ -1,3 +1,10 @@
+/**
+ * Grid of five resolution cards: outcome badge, short title, 100% mini tally bar
+ * with the same SVG patterns as the main chart, and per-investor vote pills that
+ * appear on hover/focus. Pattern `<defs>` use scope `"tally"` so ids never clash
+ * with the chart's `"chart"` scope.
+ */
+
 "use client";
 
 import { motion, useReducedMotion, type Variants } from "framer-motion";
@@ -70,6 +77,12 @@ type MiniBarProps = {
   dividerColor: string;
 };
 
+/**
+ * Horizontally stacked segments (For / Against / Abstain) as a single SVG bar.
+ * Widths are percentages of 100 so the bar always fills the card. Segment
+ * boundaries use `dividerColor` (typically `tokens.surface`) for a hairline
+ * that works in both themes.
+ */
 function MiniTallyBar({ tally, dividerColor }: MiniBarProps) {
   const height = 8;
   // Pre-compute each visible segment's width + offset so we can draw thin
@@ -142,6 +155,7 @@ type InvestorPillsProps = {
   reduced: boolean;
 };
 
+/** One pill per investor, coloured by vote. Shown when the parent card is hovered/focused. */
 function InvestorPills({ resolutionId, reduced }: InvestorPillsProps) {
   return (
     <motion.ul
@@ -182,6 +196,7 @@ type CardProps = {
   dividerColor: string;
 };
 
+/** Single resolution card: header row, title, mini bar, counts, investor pills. */
 function ResolutionCard({ tally, reduced, dividerColor }: CardProps) {
   const { resolution: r, For, Against, Abstain } = tally;
   const plurality = getPluralityLabel(tally);
@@ -265,6 +280,7 @@ function ResolutionCard({ tally, reduced, dividerColor }: CardProps) {
   );
 }
 
+/** Section wrapper + hidden `<defs>` for all mini bars + responsive card grid. */
 export default function ResolutionsSection() {
   const reduced = useReducedMotion();
   const tokens = useThemeTokens();
