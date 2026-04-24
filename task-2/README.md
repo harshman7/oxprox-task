@@ -1,4 +1,4 @@
-Data Pipeline Design: OxProx Quarterly Voting Records
+### Data Pipeline Design: OxProx Quarterly Voting Records
 By Harshmanpreet Singh
 
 When designing this pipeline, I heavily drew upon my recent work building DocSage, an end-to-end Intelligent Document Processing (IDP) platform. Building DocSage taught me how to handle messy, unpredictable document structures and build robust data extraction pipelines. 
@@ -14,8 +14,8 @@ The pipeline operates on AWS (designed as a managed-cloud mirror of the local ar
 ### 2. Pragmatic Extraction (The 3 Sources)
 Each source requires a unique extraction method for themselves, and then unified downstream into a standard pandas DataFrame:
 * Australian HTML: Use Python’s requests and BeautifulSoup to traverse the DOM and extract the inline records directly from the HTML elements.
-* US CSV (Dynamic URL): A two-step script. BeautifulSoup parses the host page to locate the dynamic href containing the latest .csv extension, followed by pandas.read_csv() to ingest the file.
-* UK PDF: To avoid the cost and complexity of AI/OCR tools (which I utilized in DocSage), I would use pdfplumber. Assuming this is a machine-generated PDF, pdfplumber uses spatial geometry to mathematically extract tables into clean, nested lists without heavy OCR overhead. This is something that I have experimented with ove the past few months and it works beautifuly.
+* US CSV (Dynamic URL): A two step script. BeautifulSoup parses the host page to locate the dynamic href containing the latest .csv extension, followed by pandas.read_csv() to ingest the file.
+* UK PDF: To avoid the cost and complexity of AI/OCR tools (which I utilized in DocSage), I would use pdfplumber. Assuming this is a machine-generated PDF and not pictures clicked, pdfplumber uses spatial geometry to mathematically extract tables into clean, nested lists without heavy OCR overhead. This is something that I have experimented with over the past few months and it works beautifuly. If pdfplumber detects zero digital text (indicating a scanned image), the pipeline automatically triggers a fallback OCR script using pytesseract (Tesseract OCR) to extract the text.
 
 ### 3. Validation & Handling Missing Fields
 When building DocSage, I learned that strict guardrails are necessary before allowing data to hit a SQL database. I would use Pydantic to enforce schema contracts on the newly unified DataFrame:
@@ -24,7 +24,7 @@ When building DocSage, I learned that strict guardrails are necessary before all
 
 ### 4. Handling Format Changes & Outages
 Pipelines break when sources change formats silently. To handle this, the pipeline incorporates strict edge-case detection:
-* Zero-Row Checks: If the UK provider suddenly uploads a scanned image instead of a digital PDF, pdfplumber will quietly extract zero rows. The pipeline explicitly checks row counts against historical averages. If the count drops by >90%, it aborts the database INSERT and flags a "Format Change" error.
+* Zero-Row Checks & Scanned Documents: If the UK provider suddenly changes their format and uploads a scanned image instead of a digital PDF, pdfplumber will quietly extract zero rows. The pipeline explicitly checks for this. If no rows are extracted, it assumes the document is scanned, routes it to the OCR fallback layer (pytesseract), and flags a "Format Change / OCR Triggered" alert via CloudWatch so the team is aware of the upstream change.
 * HTTP Failures: If a source is offline, the requests module utilizes an exponential backoff retry strategy. If it fails after 3 attempts, the pipeline halts that specific region's extraction and alerts the team, allowing the other two regions to process normally.
 
 ### 5. Scheduling & Monitoring
