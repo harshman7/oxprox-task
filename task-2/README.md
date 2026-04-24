@@ -8,14 +8,14 @@ However, my approach to the OxProx pipeline prioritizes pragmatism. While DocSag
 ### 1. Architecture & Flow
 The pipeline operates on AWS (designed as a managed-cloud mirror of the local architecture I built for DocSage) and follows a standard Extract, Load, Transform (ELT) pattern:
 * Trigger: AWS EventBridge fires a quarterly cron job.
-* Execution: AWS Lambda spins up a Python container to execute extraction scripts.
+* Execution: AWS Lambda makes up a Python container to execute extraction scripts from diferrent sources.
 * Storage: Raw and standardized data are loaded into an Amazon RDS PostgreSQL database.
 
 ### 2. Pragmatic Extraction (The 3 Sources)
-Each source requires a bespoke extraction method, unified downstream into a standard pandas DataFrame:
+Each source requires a unique extraction method for themselves, and then unified downstream into a standard pandas DataFrame:
 * Australian HTML: Use Python’s requests and BeautifulSoup to traverse the DOM and extract the inline records directly from the HTML elements.
 * US CSV (Dynamic URL): A two-step script. BeautifulSoup parses the host page to locate the dynamic href containing the latest .csv extension, followed by pandas.read_csv() to ingest the file.
-* UK PDF: To avoid the cost and complexity of AI/OCR tools (which I utilized in DocSage), I would use pdfplumber. Assuming this is a machine-generated PDF, pdfplumber uses spatial geometry to mathematically extract tables into clean, nested lists without heavy OCR overhead.
+* UK PDF: To avoid the cost and complexity of AI/OCR tools (which I utilized in DocSage), I would use pdfplumber. Assuming this is a machine-generated PDF, pdfplumber uses spatial geometry to mathematically extract tables into clean, nested lists without heavy OCR overhead. This is something that I have experimented with ove the past few months and it works beautifuly.
 
 ### 3. Validation & Handling Missing Fields
 When building DocSage, I learned that strict guardrails are necessary before allowing data to hit a SQL database. I would use Pydantic to enforce schema contracts on the newly unified DataFrame:
